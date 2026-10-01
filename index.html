@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>屋台どこ...</title>
+<title>屋台どこ</title>
 
 <style>
   /* ===== 全体 ===== */
@@ -19,7 +19,7 @@
 
   body {
     margin: 0;
-    background: #ddecff;
+    background: #ecf3ff;
     color: #17324d;
     font-family: system-ui, -apple-system, "Hiragino Sans",
       "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic",
@@ -64,7 +64,7 @@
   .slide {
     position: relative;
     margin: 0 0 4px;
-    background: #9fdfff;
+    background: #ecf3ff;
   }
 
   .slide-band {
@@ -156,7 +156,7 @@
   }
 
   /* ============================================================
-     地図アプリ選択モーダル
+     地図アプリ選択ボトムシート
      ============================================================ */
 
   .map-modal {
@@ -164,10 +164,11 @@
     inset: 0;
     z-index: 1000;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    padding: 20px;
-    background: transparent;
+    padding: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: rgba(0, 0, 0, 0);
+    pointer-events: auto;
   }
 
   .map-modal[hidden] {
@@ -177,15 +178,30 @@
   .map-modal-panel {
     width: 100%;
     max-width: 420px;
-    padding: 24px 18px 18px;
-    border-radius: 18px;
+    padding: 18px 14px 14px;
+    border-radius: 20px 20px 14px 14px;
     background: #ffffff;
-    box-shadow: 0 8px 30px rgba(0, 75, 125, 0.28);
+    box-shadow: 0 -8px 30px rgba(0, 75, 125, 0.22);
+
+    transform: translateY(110%);
+    opacity: 0;
+    transition:
+      transform 0.24s ease,
+      opacity 0.18s ease;
+  }
+
+  .map-modal.is-open {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .map-modal.is-open .map-modal-panel {
+    transform: translateY(0);
+    opacity: 1;
   }
 
   .map-modal-title {
-    margin: 0 0 14px;
-    font-size: 20px;
+    margin: 0 0 10px;
+    font-size: 19px;
     font-weight: bold;
     text-align: center;
     color: #000000;
@@ -194,7 +210,7 @@
   .map-choice-button {
     display: block;
     width: 100%;
-    min-height: 52px;
+    min-height: 54px;
     margin: 10px 0 0;
     border: 0;
     border-radius: 12px;
@@ -214,11 +230,6 @@
 
   .map-choice-button.google {
     background: #287dff;
-  }
-
-  .map-choice-button.cancel {
-    background: #d8d8d8;
-    color: #000000;
   }
 
   .map-choice-button:active {
@@ -247,7 +258,7 @@
 </div>
 
 <!-- ============================================================
-     iPhone / iPad 用 地図選択ダイアログ
+     iPhone / iPad 用 地図選択ボトムシート
      ============================================================ -->
 
 <div id="mapModal"
@@ -273,12 +284,6 @@
             class="map-choice-button google"
             type="button">
       Google Maps
-    </button>
-
-    <button id="cancelMapButton"
-            class="map-choice-button cancel"
-            type="button">
-      キャンセル
     </button>
 
   </div>
@@ -1498,7 +1503,8 @@
     'intent://maps.google.com/maps?q=';
 
   // iPhone / iPad の Google Maps アプリ
-  var GOOGLE_MAPS_IOS_BASE_URL = 'comgooglemaps://?q=';
+  var GOOGLE_MAPS_IOS_BASE_URL =
+    'comgooglemaps://?q=';
 
   // 運行時間外に開く固定地点
   var OFF_HOURS_POINT = [34.7127151, 137.8586766];
@@ -1536,7 +1542,7 @@
   var locateButton =
     document.getElementById('locateButton');
 
-  // 地図選択モーダル
+  // 地図選択ボトムシート
   var mapModal =
     document.getElementById('mapModal');
 
@@ -1545,9 +1551,6 @@
 
   var googleMapButton =
     document.getElementById('googleMapButton');
-
-  var cancelMapButton =
-    document.getElementById('cancelMapButton');
 
   // ============================================================
   // アプリの状態
@@ -2238,14 +2241,23 @@
 
     mapModal.hidden = false;
 
+    // 表示直後にアニメーション開始
+    requestAnimationFrame(function () {
+      mapModal.classList.add('is-open');
+    });
+
     setTimeout(function () {
       appleMapButton.focus();
-    }, 0);
+    }, 50);
   }
 
   function closeMapChoice() {
-    mapModal.hidden = true;
+    mapModal.classList.remove('is-open');
     app.pendingMapPoint = null;
+
+    setTimeout(function () {
+      mapModal.hidden = true;
+    }, 240);
   }
 
   function openAppleMaps() {
@@ -2257,7 +2269,7 @@
     }
 
     var url =
-      buildAppleMapsUrl(point);
+      buil466sUrl(point);
 
     closeMapChoice();
 
@@ -2448,7 +2460,7 @@
   }
 
   // ============================================================
-  // 地図選択モーダルのイベント
+  // 地図選択ボトムシートのイベント
   // ============================================================
 
   appleMapButton.addEventListener(
@@ -2465,16 +2477,8 @@
     }
   );
 
-  cancelMapButton.addEventListener(
-    'click',
-    function () {
-      closeMapChoice();
-    }
-  );
-
   /*
-   * モーダル背景部分をタップした場合も閉じる。
-   * 背景は透明なので、元の画面がそのまま見える。
+   * ボトムシート外側をタップした場合に閉じる。
    */
   mapModal.addEventListener(
     'click',
