@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>屋台の現在地</title>
+<title>屋台どこ...</title>
 
 <style>
   /* ===== 全体 ===== */
@@ -1497,9 +1497,6 @@
   var GOOGLE_MAPS_ANDROID_INTENT_BASE =
     'intent://maps.google.com/maps?q=';
 
-  // iPhone / iPad の Appleマップ
-  var APPLE_MAPS_BASE_URL = 'maps://?ll=';
-
   // iPhone / iPad の Google Maps アプリ
   var GOOGLE_MAPS_IOS_BASE_URL = 'comgooglemaps://?q=';
 
@@ -2165,10 +2162,18 @@
       return null;
     }
 
-    return APPLE_MAPS_BASE_URL +
-      point.lat.toFixed(6) +
+    var coordinate =
+      point.lat.toFixed(7) +
       ',' +
-      point.lng.toFixed(6);
+      point.lng.toFixed(7);
+
+    return (
+      'https://maps.apple.com/place?' +
+      'coordinate=' +
+      encodeURIComponent(coordinate) +
+      '&name=' +
+      encodeURIComponent('屋台')
+    );
   }
 
   function buildGoogleMapsIosUrl(point) {
