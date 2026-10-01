@@ -1,43 +1,49 @@
-<!-- File: index.html -->
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
 <title>屋台の現在地</title>
+
 <style>
   /* ===== 全体 ===== */
   * {
     box-sizing: border-box;
   }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
+
   body {
     margin: 0;
-    background: #f4f4f4;
-    color: #222;
-    font-family: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
-    /* 固定ボタンで最後の画像が隠れないための余白（実際の高さはJavaScriptで調整する） */
-    padding-bottom: 140px;
+    background: #c9edff;
+    color: #17324d;
+    font-family: system-ui, -apple-system, "Hiragino Sans",
+      "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic",
+      Meiryo, sans-serif;
+    padding-bottom: 92px;
   }
 
-  /* ===== テスト時刻の表示（画面上部に小さく） ===== */
+  /* ===== テスト時刻の表示 ===== */
   .test-bar {
     margin: 0;
-    padding: 4px 8px;
+    padding: 5px 8px;
     font-size: 12px;
     line-height: 1.4;
-    background: #ffe08a;
-    color: #333;
+    background: #7fd8ff;
+    color: #083a5f;
     text-align: center;
   }
+
   .test-bar[hidden] {
     display: none;
   }
+
   .test-bar.is-invalid {
-    background: #ffc9c9;
+    background: #8fd0f4;
   }
 
   /* ===== 画像の縦並び ===== */
@@ -46,79 +52,81 @@
     max-width: 900px;
     margin: 0 auto;
   }
+
   .gallery-note {
     margin: 0;
     padding: 24px 8px;
     font-size: 14px;
-    color: #666;
+    color: #276486;
     text-align: center;
   }
+
   .slide {
     position: relative;
     margin: 0 0 4px;
-    background: #ddd;
+    background: #9fdfff;
   }
-  /* 「運行中」の帯（current のときだけ表示） */
+
   .slide-band {
     display: none;
-    padding: 6px 8px;
-    background: #d62828;
+    padding: 7px 8px;
+    background: #f04444;
     color: #fff;
     font-size: 15px;
     font-weight: bold;
     letter-spacing: 0.1em;
     text-align: center;
   }
+
   .slide[data-state="current"] .slide-band {
     display: block;
   }
+
+  .slide[data-state="resting"] .slide-band {
+    display: block;
+  }
+
   .slide-img {
     display: block;
     width: 100%;
     height: auto;
   }
-  /* 終了した運行表は暗くする */
+
   .slide[data-state="past"] .slide-img,
   .slide[data-state="past"] .slide-missing {
     filter: brightness(0.6);
   }
-  /* 画像が見つからない場合の表示 */
+
   .slide-missing {
     display: none;
     padding: 24px 8px;
     font-size: 13px;
-    color: #555;
+    color: #276486;
     text-align: center;
-    background: #e2e2e2;
+    background: #a9ddf5;
   }
+
   .slide.is-missing .slide-img {
     display: none;
   }
+
   .slide.is-missing .slide-missing {
     display: block;
   }
 
-  /* ===== 画面下部に固定するメッセージ欄とボタン ===== */
+  /* ===== 画面下部のボタン ===== */
   .bottom-bar {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 10;
-    padding: 0px 12px 10px;
+    padding: 0 12px 10px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 255, 255, 0.97);
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
+    background: transparent;
+    box-shadow: none;
   }
-  .message {
-    max-width: 900px;
-    min-height: 1.5em;
-    margin: 0 auto 6px;
-    font-size: 15px;
-    line-height: 1.5;
-    text-align: center;
-    word-break: break-all;
-  }
+
   .locate-button {
     display: block;
     width: 100%;
@@ -127,7 +135,7 @@
     margin: 0 auto;
     border: 0;
     border-radius: 12px;
-    background: #3385d6;
+    background: #118cff;
     color: #fff;
     font-size: 20px;
     font-weight: bold;
@@ -135,15 +143,93 @@
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 4px 12px rgba(0, 100, 190, 0.24);
   }
+
   .locate-button:active {
-    background: #08539e;
+    background: #006dde;
   }
+
   .locate-button:focus-visible {
-    outline: 3px solid #ffb703;
+    outline: 3px solid #ffe066;
+    outline-offset: 2px;
+  }
+
+  /* ============================================================
+     地図アプリ選択モーダル
+     ============================================================ */
+  .map-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: transparent;
+  }
+
+  .map-modal[hidden] {
+    display: none;
+  }
+
+  .map-modal-panel {
+    width: 100%;
+    max-width: 420px;
+    padding: 24px 18px 18px;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 8px 30px rgba(0, 75, 125, 0.28);
+  }
+
+  .map-modal-title {
+    margin: 0 0 14px;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    color: #15466b;
+  }
+
+  .map-choice-button {
+    display: block;
+    width: 100%;
+    min-height: 52px;
+    margin: 10px 0 0;
+    border: 0;
+    border-radius: 12px;
+    background: #118cff;
+    color: #fff;
+    font-size: 17px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .map-choice-button.apple {
+    background: #22272c;
+  }
+
+  .map-choice-button.google {
+    background: #287dff;
+  }
+
+  .map-choice-button.cancel {
+    background: #d8d8d8;
+    color: #000000;
+  }
+
+  .map-choice-button:active {
+    opacity: 0.78;
+  }
+
+  .map-choice-button:focus-visible {
+    outline: 3px solid #ffe066;
     outline-offset: 2px;
   }
 </style>
+
 </head>
 <body>
 
@@ -154,11 +240,51 @@
 </main>
 
 <div id="bottomBar" class="bottom-bar">
-  <p id="message" class="message" aria-live="polite"></p>
-  <button id="locateButton" class="locate-button" type="button">Googleマップで確認する</button>
+  <button id="locateButton" class="locate-button" type="button">
+    マップで確認する
+  </button>
+</div>
+
+<!-- ============================================================
+     iPhone / iPad 用 地図選択ダイアログ
+     ============================================================ -->
+
+<div id="mapModal"
+     class="map-modal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="mapModalTitle"
+     hidden>
+
+  <div class="map-modal-panel">
+
+    <h2 id="mapModalTitle" class="map-modal-title">
+      地図アプリを選択
+    </h2>
+
+    <button id="appleMapButton"
+            class="map-choice-button apple"
+            type="button">
+      Appleマップ
+    </button>
+
+    <button id="googleMapButton"
+            class="map-choice-button google"
+            type="button">
+      Google Maps
+    </button>
+
+    <button id="cancelMapButton"
+            class="map-choice-button cancel"
+            type="button">
+      キャンセル
+    </button>
+
+  </div>
 </div>
 
 <!-- core.js（admin.html に内蔵したものと同じ内容） -->
+
 <script>
 // File: core.js
 // 屋台現在地表示アプリ 共通ロジック（メイン画面・管理画面の両方で使用）
@@ -168,17 +294,20 @@
 
   // 地球の半径（m）
   var EARTH_R = 6371000;
-  // ルートから離れすぎと判定する距離（m）。この値以上なら置かない
+
+  // ルートから離れすぎと判定する距離（m）
   var MAX_DIST_M = 50;
-  // 既存の点に吸着する距離（m）。この値以内なら既存の点を使う
+
+  // 既存の点に吸着する距離（m）
   var SNAP_DIST_M = 3;
+
   // 日本時間の UTC からのずれ（ミリ秒）
   var JST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
-  // メッセージ（第7章）
+  // メッセージ
   var MSG = {
-    noday: '本日は運行日ではありません',
-    after: '本日の運行は終了しました',
+    noday: '屋台小屋です',
+    after: '屋台小屋です',
     error: '運行データを読み込めませんでした'
   };
 
@@ -186,36 +315,34 @@
   // 小さな補助関数
   // ------------------------------------------------------------
 
-  // 2桁のゼロ埋め
   function pad2(n) {
     return (n < 10 ? '0' : '') + n;
   }
 
-  // 度をラジアンに変換
   function toRad(deg) {
     return deg * Math.PI / 180;
   }
 
-  // 点をコピーする（元の配列を書き換えられないようにする）
   function copyPoint(p) {
     return [p[0], p[1]];
   }
 
-  // 2点間を割合 f で線形補間する
   function lerpPoint(a, b, f) {
-    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+    return [
+      a[0] + (b[0] - a[0]) * f,
+      a[1] + (b[1] - a[1]) * f
+    ];
   }
 
-  // 小数第7位で丸める（約1cm。JSON を見やすくするため）
   function round7(x) {
     return Math.round(x * 1e7) / 1e7;
   }
 
-  // 値を画面表示用の文字列にする（エラー文用）
   function showValue(v) {
     if (v === undefined) return 'undefined';
     if (v === null) return 'null';
     if (typeof v === 'string') return v;
+
     try {
       return JSON.stringify(v);
     } catch (e) {
@@ -223,7 +350,6 @@
     }
   }
 
-  // [緯度, 経度] の形として正しいか
   function isLatLng(p) {
     return Array.isArray(p) &&
       p.length === 2 &&
@@ -233,47 +359,53 @@
       p[1] >= -180 && p[1] <= 180;
   }
 
-  // YYYY-MM-DD 形式で、実在する日付か
   function isValidDateString(s) {
-    if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    if (typeof s !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      return false;
+    }
+
     var y = Number(s.slice(0, 4));
     var m = Number(s.slice(5, 7));
     var d = Number(s.slice(8, 10));
+
     var dt = new Date(Date.UTC(y, m - 1, d));
-    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+
+    return dt.getUTCFullYear() === y &&
+      dt.getUTCMonth() === m - 1 &&
+      dt.getUTCDate() === d;
   }
 
-  // 安定ソート（同じ順位なら元の並び順を保つ）
   function stableSort(arr, cmp) {
     var wrapped = arr.map(function (v, i) {
       return { v: v, i: i };
     });
+
     wrapped.sort(function (x, y) {
       var c = cmp(x.v, y.v);
       return c !== 0 ? c : x.i - y.i;
     });
+
     return wrapped.map(function (w) {
       return w.v;
     });
   }
 
-  // 「○時○分」の形にする（分は2桁）
   function formatJa(min) {
     var m = Math.floor(min);
     return Math.floor(m / 60) + '時' + pad2(m % 60) + '分';
   }
 
-  // path の fromIdx〜toIdx の道のりの長さ（m）
   function pathLength(path, fromIdx, toIdx) {
     var total = 0;
-    var i;
-    for (i = fromIdx; i < toIdx; i++) {
+
+    for (var i = fromIdx; i < toIdx; i++) {
       total += distance(path[i], path[i + 1]);
     }
+
     return total;
   }
 
-  // チェックポイントの浅いコピー
   function copyCheckpoint(cp) {
     return {
       name: cp.name,
@@ -287,23 +419,32 @@
   // 時刻
   // ------------------------------------------------------------
 
-  // "HH:MM" を0時からの分に変換する。不正なら NaN
   function parseHM(s) {
-    if (typeof s !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(s)) return NaN;
-    return Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
+    if (typeof s !== 'string' ||
+        !/^([01]\d|2[0-3]):[0-5]\d$/.test(s)) {
+      return NaN;
+    }
+
+    return Number(s.slice(0, 2)) * 60 +
+      Number(s.slice(3, 5));
   }
 
-  // 0時からの分を "HH:MM" に変換する（小数は切り捨て、24時間で折り返す）
   function formatHM(min) {
-    if (typeof min !== 'number' || !isFinite(min)) return '';
+    if (typeof min !== 'number' || !isFinite(min)) {
+      return '';
+    }
+
     var m = Math.floor(min);
     m = ((m % 1440) + 1440) % 1440;
-    return pad2(Math.floor(m / 60)) + ':' + pad2(m % 60);
+
+    return pad2(Math.floor(m / 60)) +
+      ':' +
+      pad2(m % 60);
   }
 
-  // 日本時間の日付と時刻（分。秒は小数）を返す。端末のタイムゾーンに関係なく計算する
   function nowJST(date) {
     var d;
+
     if (date instanceof Date) {
       d = date;
     } else if (date === undefined || date === null) {
@@ -311,46 +452,83 @@
     } else {
       d = new Date(date);
     }
+
     var ms = d.getTime();
-    if (!isFinite(ms)) return { date: '', minutes: NaN };
-    // UTC の時刻に9時間を足し、UTC として読み取ると日本時間になる
+
+    if (!isFinite(ms)) {
+      return {
+        date: '',
+        minutes: NaN
+      };
+    }
+
     var j = new Date(ms + JST_OFFSET_MS);
-    var ymd = j.getUTCFullYear() + '-' + pad2(j.getUTCMonth() + 1) + '-' + pad2(j.getUTCDate());
-    var minutes = j.getUTCHours() * 60 +
+
+    var ymd =
+      j.getUTCFullYear() +
+      '-' +
+      pad2(j.getUTCMonth() + 1) +
+      '-' +
+      pad2(j.getUTCDate());
+
+    var minutes =
+      j.getUTCHours() * 60 +
       j.getUTCMinutes() +
       j.getUTCSeconds() / 60 +
       j.getUTCMilliseconds() / 60000;
-    return { date: ymd, minutes: minutes };
+
+    return {
+      date: ymd,
+      minutes: minutes
+    };
   }
 
   // ------------------------------------------------------------
   // 距離と位置
   // ------------------------------------------------------------
 
-  // 2点間の距離（m）。ハーバーサイン式
   function distance(a, b) {
     var lat1 = toRad(a[0]);
     var lat2 = toRad(b[0]);
     var dLat = lat2 - lat1;
     var dLng = toRad(b[1] - a[1]);
+
     var s1 = Math.sin(dLat / 2);
     var s2 = Math.sin(dLng / 2);
-    var h = s1 * s1 + Math.cos(lat1) * Math.cos(lat2) * s2 * s2;
+
+    var h =
+      s1 * s1 +
+      Math.cos(lat1) * Math.cos(lat2) * s2 * s2;
+
     h = Math.min(1, Math.max(0, h));
+
     return 2 * EARTH_R * Math.asin(Math.sqrt(h));
   }
 
-  // fromIdx〜toIdx の区間で、道のりの割合 r の地点を返す
   function pointAlong(path, fromIdx, toIdx, r) {
-    if (!Array.isArray(path) || path.length === 0) return null;
-    if (!Number.isInteger(fromIdx) || !Number.isInteger(toIdx)) return null;
-    if (fromIdx < 0 || toIdx < 0 || fromIdx >= path.length || toIdx >= path.length) return null;
+    if (!Array.isArray(path) || path.length === 0) {
+      return null;
+    }
 
-    if (typeof r !== 'number' || isNaN(r)) r = 0;
+    if (!Number.isInteger(fromIdx) ||
+        !Number.isInteger(toIdx)) {
+      return null;
+    }
+
+    if (fromIdx < 0 ||
+        toIdx < 0 ||
+        fromIdx >= path.length ||
+        toIdx >= path.length) {
+      return null;
+    }
+
+    if (typeof r !== 'number' || isNaN(r)) {
+      r = 0;
+    }
+
     if (r < 0) r = 0;
     if (r > 1) r = 1;
 
-    // 逆向きに指定された場合は、向きを入れ替えて割合も反転する
     if (fromIdx > toIdx) {
       var tmp = fromIdx;
       fromIdx = toIdx;
@@ -358,39 +536,64 @@
       r = 1 - r;
     }
 
-    if (fromIdx === toIdx || r === 0) return copyPoint(path[fromIdx]);
-    if (r === 1) return copyPoint(path[toIdx]);
+    if (fromIdx === toIdx || r === 0) {
+      return copyPoint(path[fromIdx]);
+    }
 
-    // 各線分の長さを求める
+    if (r === 1) {
+      return copyPoint(path[toIdx]);
+    }
+
     var lens = [];
     var total = 0;
-    var i;
-    for (i = fromIdx; i < toIdx; i++) {
+
+    for (var i = fromIdx; i < toIdx; i++) {
       var len = distance(path[i], path[i + 1]);
       lens.push(len);
       total += len;
     }
-    if (total === 0) return copyPoint(path[fromIdx]);
 
-    // 目標の道のりを含む線分を探し、その中で線形補間する
+    if (total === 0) {
+      return copyPoint(path[fromIdx]);
+    }
+
     var target = r * total;
     var acc = 0;
-    var k;
-    for (k = 0; k < lens.length; k++) {
+
+    for (var k = 0; k < lens.length; k++) {
       var seg = lens[k];
+
       if (acc + seg >= target) {
-        var f = seg === 0 ? 0 : (target - acc) / seg;
-        return lerpPoint(path[fromIdx + k], path[fromIdx + k + 1], f);
+        var f = seg === 0 ?
+          0 :
+          (target - acc) / seg;
+
+        return lerpPoint(
+          path[fromIdx + k],
+          path[fromIdx + k + 1],
+          f
+        );
       }
+
       acc += seg;
     }
+
     return copyPoint(path[toIdx]);
   }
 
-  // ルート上で latlng に最も近い地点を返す
   function nearestOnPath(path, latlng) {
-    var result = { segIndex: -1, point: null, t: 0, dist: Infinity };
-    if (!Array.isArray(path) || path.length === 0 || !isLatLng(latlng)) return result;
+    var result = {
+      segIndex: -1,
+      point: null,
+      t: 0,
+      dist: Infinity
+    };
+
+    if (!Array.isArray(path) ||
+        path.length === 0 ||
+        !isLatLng(latlng)) {
+      return result;
+    }
 
     if (path.length === 1) {
       return {
@@ -401,24 +604,32 @@
       };
     }
 
-    // タップ地点を原点とした平面（m 単位）に投影して、線分への垂線の足を求める
     var ky = Math.PI / 180 * EARTH_R;
     var kx = ky * Math.cos(toRad(latlng[0]));
-    var i;
-    for (i = 0; i < path.length - 1; i++) {
+
+    for (var i = 0; i < path.length - 1; i++) {
       var a = path[i];
       var b = path[i + 1];
+
       var ax = (a[1] - latlng[1]) * kx;
       var ay = (a[0] - latlng[0]) * ky;
       var bx = (b[1] - latlng[1]) * kx;
       var by = (b[0] - latlng[0]) * ky;
+
       var dx = bx - ax;
       var dy = by - ay;
+
       var len2 = dx * dx + dy * dy;
-      var t = len2 === 0 ? 0 : -(ax * dx + ay * dy) / len2;
+
+      var t = len2 === 0 ?
+        0 :
+        -(ax * dx + ay * dy) / len2;
+
       if (t < 0) t = 0;
       if (t > 1) t = 1;
+
       var p;
+
       if (t === 0) {
         p = copyPoint(a);
       } else if (t === 1) {
@@ -426,72 +637,109 @@
       } else {
         p = lerpPoint(a, b, t);
       }
+
       var d = distance(p, latlng);
+
       if (d < result.dist) {
-        result = { segIndex: i, point: p, t: t, dist: d };
+        result = {
+          segIndex: i,
+          point: p,
+          t: t,
+          dist: d
+        };
       }
     }
+
     return result;
   }
 
   // ------------------------------------------------------------
-  // チェックポイントの挿入（第8-3章）
+  // チェックポイント
   // ------------------------------------------------------------
 
-  // 新しいチェックポイントの仮の時刻を決める
-  // 前のチェックポイントの depart と次のチェックポイントの arrive の間を、道のりの割合で配分する
   function tentativeTime(day, idx) {
     var cps = day.checkpoints;
     var prev = null;
     var next = null;
+
     cps.forEach(function (cp) {
       if (!cp || typeof cp.idx !== 'number') return;
-      if (cp.idx < idx && (prev === null || cp.idx > prev.idx)) prev = cp;
-      if (cp.idx > idx && (next === null || cp.idx < next.idx)) next = cp;
+
+      if (cp.idx < idx &&
+          (prev === null || cp.idx > prev.idx)) {
+        prev = cp;
+      }
+
+      if (cp.idx > idx &&
+          (next === null || cp.idx < next.idx)) {
+        next = cp;
+      }
     });
+
     var pd = prev ? parseHM(prev.depart) : NaN;
     var na = next ? parseHM(next.arrive) : NaN;
 
     if (!isNaN(pd) && !isNaN(na)) {
-      if (na <= pd) return formatHM(pd);
+      if (na <= pd) {
+        return formatHM(pd);
+      }
+
       var dPrev = pathLength(day.path, prev.idx, idx);
       var dNext = pathLength(day.path, idx, next.idx);
       var total = dPrev + dNext;
       var ratio = total > 0 ? dPrev / total : 0;
+
       var m = pd + Math.round((na - pd) * ratio);
+
       if (m < pd) m = pd;
       if (m > na) m = na;
+
       return formatHM(m);
     }
+
     if (!isNaN(pd)) return formatHM(pd);
     if (!isNaN(na)) return formatHM(na);
+
     return null;
   }
 
-  // ルート上にチェックポイントを挿入し、その idx を返す。置けない場合は -1
   function insertCheckpointPoint(day, latlng) {
-    if (!day || !Array.isArray(day.path) || day.path.length < 2 || !isLatLng(latlng)) return -1;
-    if (!Array.isArray(day.checkpoints)) day.checkpoints = [];
+    if (!day ||
+        !Array.isArray(day.path) ||
+        day.path.length < 2 ||
+        !isLatLng(latlng)) {
+      return -1;
+    }
+
+    if (!Array.isArray(day.checkpoints)) {
+      day.checkpoints = [];
+    }
+
     var path = day.path;
     var cps = day.checkpoints;
 
     var near = nearestOnPath(path, latlng);
-    // 50m 以上離れている場合は置かない
-    if (!near.point || !(near.dist < MAX_DIST_M)) return -1;
+
+    if (!near.point || !(near.dist < MAX_DIST_M)) {
+      return -1;
+    }
 
     var a = near.segIndex;
     var b = a + 1;
+
     var dA = distance(near.point, path[a]);
     var dB = distance(near.point, path[b]);
+
     var idx;
     var needInsert = false;
 
     if (dA <= SNAP_DIST_M || dB <= SNAP_DIST_M) {
-      // 既存の点から3m以内なら、近いほうの点の添字を使う
       idx = dA <= dB ? a : b;
+
       var exists = cps.some(function (cp) {
         return cp && cp.idx === idx;
       });
+
       if (exists) return -1;
     } else {
       idx = b;
@@ -499,84 +747,144 @@
     }
 
     if (needInsert) {
-      // path に地点を挿入し、後ろのチェックポイントの idx を1ずつ増やす
-      path.splice(idx, 0, [round7(near.point[0]), round7(near.point[1])]);
+      path.splice(idx, 0, [
+        round7(near.point[0]),
+        round7(near.point[1])
+      ]);
+
       cps.forEach(function (cp) {
-        if (cp && typeof cp.idx === 'number' && cp.idx >= idx) cp.idx += 1;
+        if (cp &&
+            typeof cp.idx === 'number' &&
+            cp.idx >= idx) {
+          cp.idx += 1;
+        }
       });
     }
 
     var time = tentativeTime(day, idx);
-    cps.push({ name: 'チェックポイント', idx: idx, arrive: time, depart: time });
 
-    // idx の昇順に並べ直す（配列そのものは同じものを使い続ける）
+    cps.push({
+      name: 'チェックポイント',
+      idx: idx,
+      arrive: time,
+      depart: time
+    });
+
     var sorted = stableSort(cps, function (x, y) {
-      var xi = x && typeof x.idx === 'number' ? x.idx : Infinity;
-      var yi = y && typeof y.idx === 'number' ? y.idx : Infinity;
+      var xi = x && typeof x.idx === 'number' ?
+        x.idx :
+        Infinity;
+
+      var yi = y && typeof y.idx === 'number' ?
+        y.idx :
+        Infinity;
+
       return xi - yi;
     });
+
     cps.length = 0;
+
     sorted.forEach(function (cp) {
       cps.push(cp);
     });
+
     return idx;
   }
 
   // ------------------------------------------------------------
-  // データの検査（第4章）
+  // データ検査
   // ------------------------------------------------------------
 
-  // 時刻の項目を検査する。必須で HH:MM 形式であること
   function checkTimeField(errors, prefix, value, field) {
     if (value === null || value === undefined) {
       errors.push(prefix + field + ' が未入力です');
       return false;
     }
+
     if (isNaN(parseHM(value))) {
-      errors.push(prefix + field + ' が HH:MM 形式ではありません（現在：' + showValue(value) + '）');
+      errors.push(
+        prefix +
+        field +
+        ' が HH:MM 形式ではありません（現在：' +
+        showValue(value) +
+        '）'
+      );
       return false;
     }
+
     return true;
   }
 
-  // 1日分のデータを検査する。di は days の添字（0始まり）
   function validateDay(day, di) {
     var errors = [];
     var n = di + 1;
     var P = n + '日目：';
 
-    if (!day || typeof day !== 'object' || Array.isArray(day)) {
+    if (!day ||
+        typeof day !== 'object' ||
+        Array.isArray(day)) {
       errors.push(P + 'データがありません');
       return errors;
     }
+
     if (day.id !== 'd' + n) {
-      errors.push(P + 'id は「d' + n + '」にしてください（現在：' + showValue(day.id) + '）');
+      errors.push(
+        P +
+        'id は「d' +
+        n +
+        '」にしてください（現在：' +
+        showValue(day.id) +
+        '）'
+      );
     }
+
     if (day.label !== n + '日目') {
-      errors.push(P + 'label は「' + n + '日目」にしてください（現在：' + showValue(day.label) + '）');
+      errors.push(
+        P +
+        'label は「' +
+        n +
+        '日目」にしてください（現在：' +
+        showValue(day.label) +
+        '）'
+      );
     }
+
     if (!isValidDateString(day.date)) {
-      errors.push(P + 'date が YYYY-MM-DD 形式の正しい日付ではありません（現在：' + showValue(day.date) + '）');
+      errors.push(
+        P +
+        'date が YYYY-MM-DD 形式の正しい日付ではありません（現在：' +
+        showValue(day.date) +
+        '）'
+      );
     }
 
     var path = day.path;
     var pathIsArray = Array.isArray(path);
+
     if (!pathIsArray || path.length < 2) {
       errors.push(P + 'path は2点以上必要です');
     }
+
     if (pathIsArray) {
       path.forEach(function (p, k) {
         if (!isLatLng(p)) {
-          errors.push(P + 'path の' + (k + 1) + '点目が [緯度, 経度] の形ではありません');
+          errors.push(
+            P +
+            'path の' +
+            (k + 1) +
+            '点目が [緯度, 経度] の形ではありません'
+          );
         }
       });
     }
 
     var cps = day.checkpoints;
+
     if (!Array.isArray(cps)) {
       errors.push(P + 'checkpoints が配列ではありません');
       return errors;
     }
+
     if (cps.length < 2) {
       errors.push(P + 'checkpoints は2件以上必要です');
     }
@@ -586,84 +894,180 @@
     var lastK = cps.length - 1;
 
     cps.forEach(function (cp, k) {
-      var C = n + '日目 チェックポイント' + (k + 1) + '：';
-      if (!cp || typeof cp !== 'object' || Array.isArray(cp)) {
+      var C =
+        n +
+        '日目 チェックポイント' +
+        (k + 1) +
+        '：';
+
+      if (!cp ||
+          typeof cp !== 'object' ||
+          Array.isArray(cp)) {
         errors.push(C + 'データがありません');
         return;
       }
 
-      // name
-      if (typeof cp.name !== 'string' || cp.name.trim() === '') {
+      if (typeof cp.name !== 'string' ||
+          cp.name.trim() === '') {
         errors.push(C + 'name が空です');
       }
 
-      // idx
       if (!Number.isInteger(cp.idx)) {
-        errors.push(C + 'idx が整数ではありません（現在：' + showValue(cp.idx) + '）');
+        errors.push(
+          C +
+          'idx が整数ではありません（現在：' +
+          showValue(cp.idx) +
+          '）'
+        );
       } else {
-        if (pathIsArray && (cp.idx < 0 || cp.idx >= path.length)) {
-          errors.push(C + 'idx（' + cp.idx + '）が path の範囲外です');
+        if (pathIsArray &&
+            (cp.idx < 0 || cp.idx >= path.length)) {
+          errors.push(
+            C +
+            'idx（' +
+            cp.idx +
+            '）が path の範囲外です'
+          );
         }
+
         if (seen[cp.idx]) {
-          errors.push(C + 'idx（' + cp.idx + '）が他のチェックポイントと重複しています');
+          errors.push(
+            C +
+            'idx（' +
+            cp.idx +
+            '）が他のチェックポイントと重複しています'
+          );
         } else {
           seen[cp.idx] = true;
         }
+
         if (prevIdx !== null && cp.idx < prevIdx) {
           errors.push(C + 'idx の昇順に並んでいません');
         }
+
         prevIdx = cp.idx;
       }
 
-      // 役割ごとの規則
       var isFirst = k === 0;
       var isLast = k === lastK && cps.length >= 2;
+
       if (isFirst) {
         if (cp.idx !== 0) {
-          errors.push(C + '最初のチェックポイントの idx は 0 にしてください');
+          errors.push(
+            C +
+            '最初のチェックポイントの idx は 0 にしてください'
+          );
         }
-        if (cp.arrive !== null && cp.arrive !== undefined) {
-          errors.push(C + '最初のチェックポイントの arrive は null にしてください');
+
+        if (cp.arrive !== null &&
+            cp.arrive !== undefined) {
+          errors.push(
+            C +
+            '最初のチェックポイントの arrive は null にしてください'
+          );
         }
-        checkTimeField(errors, C, cp.depart, 'depart');
+
+        checkTimeField(
+          errors,
+          C,
+          cp.depart,
+          'depart'
+        );
       } else if (isLast) {
-        if (pathIsArray && cp.idx !== path.length - 1) {
-          errors.push(C + '最後のチェックポイントの idx は path の最後の添字（' + (path.length - 1) + '）にしてください');
+        if (pathIsArray &&
+            cp.idx !== path.length - 1) {
+          errors.push(
+            C +
+            '最後のチェックポイントの idx は path の最後の添字（' +
+            (path.length - 1) +
+            '）にしてください'
+          );
         }
-        if (cp.depart !== null && cp.depart !== undefined) {
-          errors.push(C + '最後のチェックポイントの depart は null にしてください');
+
+        if (cp.depart !== null &&
+            cp.depart !== undefined) {
+          errors.push(
+            C +
+            '最後のチェックポイントの depart は null にしてください'
+          );
         }
-        checkTimeField(errors, C, cp.arrive, 'arrive');
+
+        checkTimeField(
+          errors,
+          C,
+          cp.arrive,
+          'arrive'
+        );
       } else {
-        var okA = checkTimeField(errors, C, cp.arrive, 'arrive');
-        var okD = checkTimeField(errors, C, cp.depart, 'depart');
-        if (okA && okD && parseHM(cp.arrive) > parseHM(cp.depart)) {
-          errors.push(C + 'arrive（' + cp.arrive + '）が depart（' + cp.depart + '）より後になっています');
+        var okA = checkTimeField(
+          errors,
+          C,
+          cp.arrive,
+          'arrive'
+        );
+
+        var okD = checkTimeField(
+          errors,
+          C,
+          cp.depart,
+          'depart'
+        );
+
+        if (okA &&
+            okD &&
+            parseHM(cp.arrive) > parseHM(cp.depart)) {
+          errors.push(
+            C +
+            'arrive（' +
+            cp.arrive +
+            '）が depart（' +
+            cp.depart +
+            '）より後になっています'
+          );
         }
       }
     });
 
-    // 時刻の順序（前の depart ≤ 次の arrive）
-    var k;
-    for (k = 1; k < cps.length; k++) {
+    for (var k = 1; k < cps.length; k++) {
       var prev = cps[k - 1];
       var cur = cps[k];
-      if (!prev || !cur || typeof prev !== 'object' || typeof cur !== 'object') continue;
+
+      if (!prev ||
+          !cur ||
+          typeof prev !== 'object' ||
+          typeof cur !== 'object') {
+        continue;
+      }
+
       var pd = parseHM(prev.depart);
       var ca = parseHM(cur.arrive);
-      if (!isNaN(pd) && !isNaN(ca) && pd > ca) {
-        errors.push(n + '日目 チェックポイント' + (k + 1) + '：前のチェックポイントの depart（' +
-          prev.depart + '）より arrive（' + cur.arrive + '）が早くなっています');
+
+      if (!isNaN(pd) &&
+          !isNaN(ca) &&
+          pd > ca) {
+        errors.push(
+          n +
+          '日目 チェックポイント' +
+          (k + 1) +
+          '：前のチェックポイントの depart（' +
+          prev.depart +
+          '）より arrive（' +
+          cur.arrive +
+          '）が早くなっています'
+        );
       }
     }
+
     return errors;
   }
 
-  // データ全体を検査し、エラー文字列の配列を返す
   function validate(data) {
-    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    if (!data ||
+        typeof data !== 'object' ||
+        Array.isArray(data)) {
       return ['データがオブジェクトではありません'];
     }
+
     var errors = [];
     var dayIds = {};
 
@@ -671,20 +1075,43 @@
       errors.push('days：配列ではありません');
     } else {
       var days = data.days;
+
       if (days.length !== 3) {
-        errors.push('days：3件必要です（現在' + days.length + '件）');
+        errors.push(
+          'days：3件必要です（現在' +
+          days.length +
+          '件）'
+        );
       }
+
       days.forEach(function (day, i) {
         errors = errors.concat(validateDay(day, i));
-        if (day && typeof day.id === 'string') dayIds[day.id] = true;
+
+        if (day && typeof day.id === 'string') {
+          dayIds[day.id] = true;
+        }
       });
-      // 日付の重複
+
       var firstIndexOfDate = {};
+
       days.forEach(function (day, i) {
-        if (!day || !isValidDateString(day.date)) return;
-        if (Object.prototype.hasOwnProperty.call(firstIndexOfDate, day.date)) {
-          errors.push((i + 1) + '日目：date（' + day.date + '）が' +
-            (firstIndexOfDate[day.date] + 1) + '日目と重複しています');
+        if (!day ||
+            !isValidDateString(day.date)) {
+          return;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(
+          firstIndexOfDate,
+          day.date
+        )) {
+          errors.push(
+            (i + 1) +
+            '日目：date（' +
+            day.date +
+            '）が' +
+            (firstIndexOfDate[day.date] + 1) +
+            '日目と重複しています'
+          );
         } else {
           firstIndexOfDate[day.date] = i;
         }
@@ -697,33 +1124,77 @@
       if (data.images.length === 0) {
         errors.push('images：1件以上必要です');
       }
+
       data.images.forEach(function (img, k) {
         var I = '画像' + (k + 1) + '：';
-        if (!img || typeof img !== 'object' || Array.isArray(img)) {
+
+        if (!img ||
+            typeof img !== 'object' ||
+            Array.isArray(img)) {
           errors.push(I + 'データがありません');
           return;
         }
-        if (typeof img.file !== 'string' || img.file.indexOf('images/') !== 0 || img.file.length <= 7) {
-          errors.push(I + 'file は images/ で始めてください（現在：' + showValue(img.file) + '）');
+
+        if (typeof img.file !== 'string' ||
+            img.file.indexOf('images/') !== 0 ||
+            img.file.length <= 7) {
+          errors.push(
+            I +
+            'file は images/ で始めてください（現在：' +
+            showValue(img.file) +
+            '）'
+          );
         }
-        if (typeof img.day !== 'string' || !Object.prototype.hasOwnProperty.call(dayIds, img.day)) {
-          errors.push(I + 'day（' + showValue(img.day) + '）に該当する日がありません');
+
+        if (typeof img.day !== 'string' ||
+            !Object.prototype.hasOwnProperty.call(
+              dayIds,
+              img.day
+            )) {
+          errors.push(
+            I +
+            'day（' +
+            showValue(img.day) +
+            '）に該当する日がありません'
+          );
         }
-        var okS = checkTimeField(errors, I, img.start, 'start');
-        var okE = checkTimeField(errors, I, img.end, 'end');
-        if (okS && okE && parseHM(img.start) >= parseHM(img.end)) {
-          errors.push(I + 'start（' + img.start + '）は end（' + img.end + '）より前にしてください');
+
+        var okS = checkTimeField(
+          errors,
+          I,
+          img.start,
+          'start'
+        );
+
+        var okE = checkTimeField(
+          errors,
+          I,
+          img.end,
+          'end'
+        );
+
+        if (okS &&
+            okE &&
+            parseHM(img.start) >= parseHM(img.end)) {
+          errors.push(
+            I +
+            'start（' +
+            img.start +
+            '）は end（' +
+            img.end +
+            '）より前にしてください'
+          );
         }
       });
     }
+
     return errors;
   }
 
   // ------------------------------------------------------------
-  // 現在地の算出（第5章）
+  // 現在地
   // ------------------------------------------------------------
 
-  // getPosition の戻り値を作る
   function makeResult(status, point, message, checkpoint) {
     return {
       status: status,
@@ -733,111 +1204,202 @@
     };
   }
 
-  // 運行表の時刻から現在地を推定する
   function getPosition(data, now) {
-    var errorResult = makeResult('error', null, MSG.error, null);
+    var errorResult = makeResult(
+      'error',
+      null,
+      MSG.error,
+      null
+    );
 
-    if (!data || typeof data !== 'object' || !Array.isArray(data.days)) return errorResult;
-    if (!now || typeof now.date !== 'string' ||
-        typeof now.minutes !== 'number' || !isFinite(now.minutes)) {
+    if (!data ||
+        typeof data !== 'object' ||
+        !Array.isArray(data.days)) {
       return errorResult;
     }
 
-    // 日付が一致する日を探す
+    if (!now ||
+        typeof now.date !== 'string' ||
+        typeof now.minutes !== 'number' ||
+        !isFinite(now.minutes)) {
+      return errorResult;
+    }
+
     var matches = [];
+
     data.days.forEach(function (day, i) {
-      if (day && day.date === now.date) matches.push({ day: day, index: i });
+      if (day && day.date === now.date) {
+        matches.push({
+          day: day,
+          index: i
+        });
+      }
     });
-    if (matches.length === 0) return makeResult('noday', null, MSG.noday, null);
-    if (matches.length > 1) return errorResult;
+
+    if (matches.length === 0) {
+      return makeResult(
+        'noday',
+        null,
+        MSG.noday,
+        null
+      );
+    }
+
+    if (matches.length > 1) {
+      return errorResult;
+    }
 
     var day = matches[0].day;
-    if (validateDay(day, matches[0].index).length > 0) return errorResult;
+
+    if (validateDay(day, matches[0].index).length > 0) {
+      return errorResult;
+    }
 
     var path = day.path;
     var cps = day.checkpoints;
     var t = now.minutes;
+
     var first = cps[0];
     var last = cps[cps.length - 1];
+
     var firstDepart = parseHM(first.depart);
     var lastArrive = parseHM(last.arrive);
 
-    // 1. 運行開始前
     if (t < firstDepart) {
-      return makeResult('before', copyPoint(path[first.idx]),
-        formatJa(firstDepart) + ' 出発予定です', copyCheckpoint(first));
+      return makeResult(
+        'before',
+        copyPoint(path[first.idx]),
+        formatJa(firstDepart) + ' 出発予定です',
+        copyCheckpoint(first)
+      );
     }
 
-    // 2. 運行終了
     if (t >= lastArrive) {
-      return makeResult('after', null, MSG.after, null);
+      return makeResult(
+        'after',
+        null,
+        MSG.after,
+        null
+      );
     }
 
-    // 3. 休憩中（移動より必ず先に判定する。境界時刻は休憩中）
     var i;
+
     for (i = 1; i < cps.length - 1; i++) {
       var a = parseHM(cps[i].arrive);
       var d = parseHM(cps[i].depart);
-      // 通過のみ（a = d）の場合は t がちょうどその時刻のときだけ成り立つ
+
       if (a <= t && t <= d) {
         var msg = a === d ?
           cps[i].name + 'を通過中です' :
-          cps[i].name + 'で休憩中です（' + formatJa(d) + ' 出発予定）';
-        // 補間計算を通さず path[idx] をそのまま返す
-        return makeResult('resting', copyPoint(path[cps[i].idx]), msg, copyCheckpoint(cps[i]));
+          cps[i].name +
+            'で休憩中です（' +
+            formatJa(d) +
+            ' 出発予定）';
+
+        return makeResult(
+          'resting',
+          copyPoint(path[cps[i].idx]),
+          msg,
+          copyCheckpoint(cps[i])
+        );
       }
     }
 
-    // 4. 移動中
     for (i = 0; i < cps.length - 1; i++) {
       var dep = parseHM(cps[i].depart);
       var arr = parseHM(cps[i + 1].arrive);
-      // 休憩中と運行終了は判定済みのため、ここでは dep ≤ t ≤ arr で探す
-      // （t が最初の出発時刻ちょうどのときも、ここで移動中 r = 0 として扱う）
+
       if (dep <= t && t <= arr) {
         var denom = arr - dep;
-        var r = denom === 0 ? 1 : (t - dep) / denom;
+        var r = denom === 0 ?
+          1 :
+          (t - dep) / denom;
+
         if (r < 0) r = 0;
         if (r > 1) r = 1;
-        var p = pointAlong(path, cps[i].idx, cps[i + 1].idx, r);
-        return makeResult('moving', p, cps[i + 1].name + 'へ移動中です', copyCheckpoint(cps[i + 1]));
+
+        var p = pointAlong(
+          path,
+          cps[i].idx,
+          cps[i + 1].idx,
+          r
+        );
+
+        return makeResult(
+          'moving',
+          p,
+          cps[i + 1].name + 'へ移動中です',
+          copyCheckpoint(cps[i + 1])
+        );
       }
     }
 
-    // ここに来るのはデータが不正な場合のみ
     return errorResult;
   }
 
   // ------------------------------------------------------------
-  // 画像の並び替え（第6章）
+  // 画像の並び替え
   // ------------------------------------------------------------
 
-  var STATE_RANK = { current: 0, future: 1, past: 2 };
+  var STATE_RANK = {
+    current: 0,
+    resting: 0,
+    future: 1,
+    past: 2
+  };
 
   function sortImages(data, now) {
-    if (!data || typeof data !== 'object' || !Array.isArray(data.images)) return [];
+    if (!data ||
+        typeof data !== 'object' ||
+        !Array.isArray(data.images)) {
+      return [];
+    }
 
-    // day の id から日付を引けるようにする
     var dateOf = {};
+
     if (Array.isArray(data.days)) {
       data.days.forEach(function (day) {
-        if (day && typeof day.id === 'string') dateOf[day.id] = day.date;
+        if (day && typeof day.id === 'string') {
+          dateOf[day.id] = day.date;
+        }
       });
     }
 
-    var today = now && typeof now.date === 'string' ? now.date : '';
-    var t = now && typeof now.minutes === 'number' ? now.minutes : NaN;
+    var today =
+      now && typeof now.date === 'string' ?
+      now.date :
+      '';
+
+    var t =
+      now && typeof now.minutes === 'number' ?
+      now.minutes :
+      NaN;
+
     var list = [];
 
     data.images.forEach(function (img, index) {
       if (!img || typeof img !== 'object') return;
-      var date = Object.prototype.hasOwnProperty.call(dateOf, img.day) ? dateOf[img.day] : undefined;
+
+      var date =
+        Object.prototype.hasOwnProperty.call(
+          dateOf,
+          img.day
+        ) ?
+        dateOf[img.day] :
+        undefined;
+
       var s = parseHM(img.start);
       var e = parseHM(img.end);
-      // 日付または時刻が分からない画像は並べられないため除外する
-      if (!isValidDateString(date) || isNaN(s) || isNaN(e)) return;
+
+      if (!isValidDateString(date) ||
+          isNaN(s) ||
+          isNaN(e)) {
+        return;
+      }
 
       var state;
+
       if (date === today) {
         if (t < s) {
           state = 'future';
@@ -857,14 +1419,29 @@
         date: date,
         start: s,
         index: index,
-        item: { file: img.file, state: state, day: img.day, start: img.start, end: img.end }
+        item: {
+          file: img.file,
+          state: state,
+          day: img.day,
+          start: img.start,
+          end: img.end
+        }
       });
     });
 
     list.sort(function (x, y) {
-      if (x.rank !== y.rank) return x.rank - y.rank;
-      if (x.date !== y.date) return x.date < y.date ? -1 : 1;
-      if (x.start !== y.start) return x.start - y.start;
+      if (x.rank !== y.rank) {
+        return x.rank - y.rank;
+      }
+
+      if (x.date !== y.date) {
+        return x.date < y.date ? -1 : 1;
+      }
+
+      if (x.start !== y.start) {
+        return x.start - y.start;
+      }
+
       return x.index - y.index;
     });
 
@@ -876,6 +1453,7 @@
   // ------------------------------------------------------------
   // 公開
   // ------------------------------------------------------------
+
   global.Core = {
     parseHM: parseHM,
     formatHM: formatHM,
@@ -890,13 +1468,17 @@
   };
 })(window);
 </script>
+
 <script>
 (function () {
   'use strict';
 
-  // ===== 設定 =====
+  // ============================================================
+  // 設定
+  // ============================================================
+
   var ROUTE_URL = 'route.json';
-  // route.json を読み込めなかったときに表示する画像（この順番で表示する）
+
   var FALLBACK_FILES = [
     'images/01.jpg',
     'images/02.jpg',
@@ -905,275 +1487,597 @@
     'images/05.jpg',
     'images/06.jpg'
   ];
-  var MAP_BASE_URL = 'https://www.google.com/maps/search/?api=1&query=';
+
+  // Google Maps ブラウザ版
+  var GOOGLE_MAPS_WEB_URL =
+    'https://www.google.com/maps/search/?api=1&query=';
+
+  // Google Maps アプリ起動用
+  var GOOGLE_MAPS_ANDROID_INTENT_BASE =
+    'intent://maps.google.com/maps?q=';
+
+  // iPhone / iPad の Appleマップ
+  var APPLE_MAPS_BASE_URL = 'maps://?ll=';
+
+  // iPhone / iPad の Google Maps アプリ
+  var GOOGLE_MAPS_IOS_BASE_URL = 'comgooglemaps://?q=';
+
+  // 運行時間外に開く固定地点
   var OFF_HOURS_POINT = [34.7127151, 137.8586766];
-  // 読み込みがこの時間（ミリ秒）を超えたら失敗として扱う
+
+  // 読み込みタイムアウト
   var LOAD_TIMEOUT_MS = 15000;
+
   // 地図を開く状態
-  var OPEN_MAP_STATUSES = ['before', 'resting', 'moving'];
-  // 画像の状態ごとの説明（代替テキスト用）
+  var OPEN_MAP_STATUSES = [
+    'before',
+    'resting',
+    'moving'
+  ];
+
   var STATE_LABELS = {
     current: '運行中',
+    resting: '運行中',
     future: 'これから',
     past: '終了'
   };
 
-  var MSG_LOADING = '運行データを読み込み中です。少し待ってからもう一度押してください';
-  var MSG_ERROR = '運行データを読み込めませんでした';
+  // ============================================================
+  // 画面の要素
+  // ============================================================
 
-  // ===== 画面の要素 =====
-  var testBar = document.getElementById('testBar');
-  var gallery = document.getElementById('gallery');
-  var galleryNote = document.getElementById('galleryNote');
-  var bottomBar = document.getElementById('bottomBar');
-  var messageEl = document.getElementById('message');
-  var locateButton = document.getElementById('locateButton');
+  var testBar =
+    document.getElementById('testBar');
 
-  // ===== アプリの状態 =====
+  var gallery =
+    document.getElementById('gallery');
+
+  var galleryNote =
+    document.getElementById('galleryNote');
+
+  var locateButton =
+    document.getElementById('locateButton');
+
+  // 地図選択モーダル
+  var mapModal =
+    document.getElementById('mapModal');
+
+  var appleMapButton =
+    document.getElementById('appleMapButton');
+
+  var googleMapButton =
+    document.getElementById('googleMapButton');
+
+  var cancelMapButton =
+    document.getElementById('cancelMapButton');
+
+  // ============================================================
+  // アプリの状態
+  // ============================================================
+
   var app = {
-    loadState: 'loading', // loading（読み込み中）・ok（成功）・error（失敗）
-    data: null,           // route.json の中身
-    testNow: null,        // ?now= で指定された時刻（{ date, minutes }）
-    figures: {},          // 画像ごとの表示要素（キー → figure 要素）
-    orderKeys: [],        // 現在の表示順（キーの配列）
-    timerId: null         // 1分ごとの並び替えのタイマー
+    loadState: 'loading',
+    data: null,
+    testNow: null,
+    figures: {},
+    orderKeys: [],
+    timerId: null,
+
+    // 地図を開く対象
+    pendingMapPoint: null
   };
 
-  // core.js が読み込まれているか
+  // ============================================================
+  // 共通
+  // ============================================================
+
   function hasCore() {
-    return typeof window.Core === 'object' && window.Core !== null;
+    return typeof window.Core === 'object' &&
+      window.Core !== null;
   }
 
-  // ===== テスト機能（?now=） =====
+  // ============================================================
+  // テスト機能
+  // ============================================================
 
-  // ?now= の値を読み取る。JSTの日時としてそのまま扱う（タイムゾーン変換しない）
   function parseTestNow() {
     var raw = null;
+
     try {
-      raw = new URLSearchParams(window.location.search).get('now');
+      raw = new URLSearchParams(
+        window.location.search
+      ).get('now');
     } catch (e) {
       raw = null;
     }
+
     if (raw === null) {
-      return { given: false };
+      return {
+        given: false
+      };
     }
-    // 「2026-10-10T18:45」形式。秒は省略可。T の代わりに空白も受け付ける
-    var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/.exec(raw.trim());
+
+    var m =
+      /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/
+        .exec(raw.trim());
+
     if (!m) {
-      return { given: true, valid: false };
+      return {
+        given: true,
+        valid: false
+      };
     }
+
     var y = Number(m[1]);
     var mo = Number(m[2]);
     var d = Number(m[3]);
     var h = Number(m[4]);
     var mi = Number(m[5]);
-    var s = m[6] ? Number(m[6]) : 0;
-    // 存在する日付かどうかを確認する（2026-02-30 などを除外）
-    var check = new Date(Date.UTC(y, mo - 1, d));
-    var dateOk = check.getUTCFullYear() === y &&
+    var s = m[6] ?
+      Number(m[6]) :
+      0;
+
+    var check =
+      new Date(Date.UTC(y, mo - 1, d));
+
+    var dateOk =
+      check.getUTCFullYear() === y &&
       check.getUTCMonth() === mo - 1 &&
       check.getUTCDate() === d;
-    if (!dateOk || h > 23 || mi > 59 || s > 59) {
-      return { given: true, valid: false };
+
+    if (!dateOk ||
+        h > 23 ||
+        mi > 59 ||
+        s > 59) {
+      return {
+        given: true,
+        valid: false
+      };
     }
-    var date = m[1] + '-' + m[2] + '-' + m[3];
+
+    var date =
+      m[1] +
+      '-' +
+      m[2] +
+      '-' +
+      m[3];
+
     return {
       given: true,
       valid: true,
-      now: { date: date, minutes: h * 60 + mi + s / 60 },
-      label: date + ' ' + m[4] + ':' + m[5] + (m[6] ? ':' + m[6] : '')
+      now: {
+        date: date,
+        minutes: h * 60 + mi + s / 60
+      },
+      label:
+        date +
+        ' ' +
+        m[4] +
+        ':' +
+        m[5] +
+        (m[6] ? ':' + m[6] : '')
     };
   }
 
-  // 画面上部のテスト時刻表示を設定する
   function setupTestBar(test) {
     if (!test.given) {
       return;
     }
+
     if (test.valid) {
       app.testNow = test.now;
-      testBar.textContent = 'テスト時刻：' + test.label + '（日本時間）';
+
+      testBar.textContent =
+        'テスト時刻：' +
+        test.label +
+        '（日本時間）';
     } else {
-      testBar.textContent = 'テスト時刻の指定が正しくありません（例：?now=2026-10-10T18:45）。現在の時刻で表示しています';
+      testBar.textContent =
+        'テスト時刻の指定が正しくありません（例：?now=2026-10-10T18:45）。現在の時刻で表示しています';
+
       testBar.classList.add('is-invalid');
     }
+
     testBar.hidden = false;
   }
 
-  // 現在時刻（JST）を { date, minutes } の形で返す。?now= 指定時は常に同じ時刻
   function getNow() {
     if (app.testNow) {
-      return { date: app.testNow.date, minutes: app.testNow.minutes };
+      return {
+        date: app.testNow.date,
+        minutes: app.testNow.minutes
+      };
     }
-    if (hasCore() && typeof window.Core.nowJST === 'function') {
+
+    if (hasCore() &&
+        typeof window.Core.nowJST === 'function') {
       return window.Core.nowJST();
     }
+
     return null;
   }
 
-  // ===== メッセージ欄 =====
+  // ============================================================
+  // 画像
+  // ============================================================
 
-  function showMessage(text) {
-    messageEl.textContent = text;
-    updateBottomSpace();
-  }
-
-  // 固定ボタンの高さに合わせて、ページ下部の余白を調整する
-  function updateBottomSpace() {
-    var h = bottomBar.offsetHeight;
-    if (h > 0) {
-      document.body.style.paddingBottom = (h + 12) + 'px';
-    }
-  }
-
-  // ===== 画像の表示と並び替え =====
-
-  // 画像1枚分の表示要素を作る
   function createFigure(file) {
-    var fig = document.createElement('figure');
+    var fig =
+      document.createElement('figure');
+
     fig.className = 'slide';
 
-    var band = document.createElement('div');
+    var band =
+      document.createElement('div');
+
     band.className = 'slide-band';
     band.textContent = '運行中';
 
-    var img = document.createElement('img');
+    var img =
+      document.createElement('img');
+
     img.className = 'slide-img';
     img.alt = '運行表';
     img.decoding = 'async';
-    img.addEventListener('error', function () {
-      fig.classList.add('is-missing');
-    });
-    img.addEventListener('load', function () {
-      fig.classList.remove('is-missing');
-    });
+
+    img.addEventListener(
+      'error',
+      function () {
+        fig.classList.add('is-missing');
+      }
+    );
+
+    img.addEventListener(
+      'load',
+      function () {
+        fig.classList.remove('is-missing');
+      }
+    );
+
     img.src = file;
 
-    var missing = document.createElement('div');
+    var missing =
+      document.createElement('div');
+
     missing.className = 'slide-missing';
-    missing.textContent = '画像がありません（' + file + '）';
+    missing.textContent =
+      '画像がありません（' +
+      file +
+      '）';
 
     fig.appendChild(band);
     fig.appendChild(img);
     fig.appendChild(missing);
+
     return fig;
   }
 
-  // 表示する画像の一覧を作る（並び順は Core.sortImages の戻り値のまま）
+  /*
+   * 休憩中でも「運行中」が出るようにする。
+   */
+  function applyOperatingState(items, now) {
+    if (!Array.isArray(items) ||
+        !items.length ||
+        !now ||
+        !app.data ||
+        !Array.isArray(app.data.days) ||
+        !hasCore() ||
+        typeof window.Core.getPosition !== 'function') {
+      return;
+    }
+
+    var result =
+      window.Core.getPosition(
+        app.data,
+        now
+      );
+
+    if (!result ||
+        (result.status !== 'resting' &&
+         result.status !== 'moving')) {
+      return;
+    }
+
+    var hasCurrent =
+      items.some(function (item) {
+        return item.state === 'current';
+      });
+
+    if (hasCurrent) {
+      return;
+    }
+
+    var dayIds = {};
+
+    app.data.days.forEach(function (day) {
+      if (day &&
+          typeof day.id === 'string' &&
+          typeof day.date === 'string') {
+        dayIds[day.id] = day.date;
+      }
+    });
+
+    var candidate = null;
+
+    items.forEach(function (item) {
+      if (!item ||
+          dayIds[item.day] !== now.date) {
+        return;
+      }
+
+      if (!item.start ||
+          typeof item.start !== 'string' ||
+          !window.Core.parseHM) {
+        return;
+      }
+
+      var start =
+        window.Core.parseHM(item.start);
+
+      if (isNaN(start) ||
+          start > now.minutes) {
+        return;
+      }
+
+      if (!candidate ||
+          start > candidate.start) {
+        candidate = {
+          item: item,
+          start: start
+        };
+      }
+    });
+
+    if (!candidate) {
+      items.forEach(function (item) {
+        if (!item ||
+            dayIds[item.day] !== now.date) {
+          return;
+        }
+
+        var start =
+          window.Core.parseHM(item.start);
+
+        if (isNaN(start)) {
+          return;
+        }
+
+        if (!candidate ||
+            start < candidate.start) {
+          candidate = {
+            item: item,
+            start: start
+          };
+        }
+      });
+    }
+
+    if (candidate) {
+      candidate.item.state = 'resting';
+    }
+  }
+
   function buildItems(now) {
     var items = [];
-    if (app.loadState === 'ok' && app.data && hasCore() && typeof window.Core.sortImages === 'function') {
-      var sorted = window.Core.sortImages(app.data, now);
+
+    if (app.loadState === 'ok' &&
+        app.data &&
+        hasCore() &&
+        typeof window.Core.sortImages === 'function') {
+
+      var sorted =
+        window.Core.sortImages(
+          app.data,
+          now
+        );
+
       if (Array.isArray(sorted)) {
         sorted.forEach(function (q) {
-          if (q && typeof q.file === 'string' && q.file) {
-            items.push({ file: q.file, state: q.state });
+          if (q &&
+              typeof q.file === 'string' &&
+              q.file) {
+
+            items.push({
+              file: q.file,
+              state: q.state,
+              day: q.day,
+              start: q.start,
+              end: q.end
+            });
           }
         });
       }
     }
-    // 読み込み失敗時や、表示できる画像がない場合は 01〜06 を順に表示する
+
     if (!items.length) {
-      items = FALLBACK_FILES.map(function (f) {
-        return { file: f, state: '' };
-      });
+      items =
+        FALLBACK_FILES.map(function (f) {
+          return {
+            file: f,
+            state: ''
+          };
+        });
     }
-    // 同じファイル名が複数あっても区別できるよう、キーを付ける
+
+    applyOperatingState(
+      items,
+      now
+    );
+
     var count = {};
+
     items.forEach(function (it) {
-      count[it.file] = (count[it.file] || 0) + 1;
-      it.key = count[it.file] === 1 ? it.file : it.file + '#' + count[it.file];
+      count[it.file] =
+        (count[it.file] || 0) + 1;
+
+      it.key =
+        count[it.file] === 1 ?
+        it.file :
+        it.file + '#' + count[it.file];
     });
+
+    items.sort(function (a, b) {
+      function rank(item) {
+        if (item.state === 'current' ||
+            item.state === 'resting') {
+          return 0;
+        }
+
+        if (item.state === 'future') {
+          return 1;
+        }
+
+        return 2;
+      }
+
+      var ra = rank(a);
+      var rb = rank(b);
+
+      if (ra !== rb) {
+        return ra - rb;
+      }
+
+      return 0;
+    });
+
     return items;
   }
 
-  // 並び替え前に、画面に見えている画像とその位置を記録する
   function captureAnchor() {
-    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-    // ページの一番上を見ている場合は、並び替え後も一番上のままにする
+    var y =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      0;
+
     if (y <= 4) {
-      return { atTop: true };
+      return {
+        atTop: true
+      };
     }
+
     var list = gallery.children;
+
     for (var i = 0; i < list.length; i++) {
-      var r = list[i].getBoundingClientRect();
+      var r =
+        list[i].getBoundingClientRect();
+
       if (r.bottom > 0) {
-        return { atTop: false, el: list[i], offset: r.top };
+        return {
+          atTop: false,
+          el: list[i],
+          offset: r.top
+        };
       }
     }
+
     return null;
   }
 
-  // 記録した画像が、並び替え後も同じ位置に見えるようにスクロールを調整する
   function restoreAnchor(anchor) {
     if (!anchor || anchor.atTop) {
       return;
     }
+
     if (!anchor.el.parentNode) {
       return;
     }
-    var diff = anchor.el.getBoundingClientRect().top - anchor.offset;
+
+    var diff =
+      anchor.el.getBoundingClientRect().top -
+      anchor.offset;
+
     if (Math.abs(diff) >= 1) {
       window.scrollBy(0, diff);
     }
   }
 
-  // 画像を表示・並び替えする（表示時と1分ごとに呼ぶ）
   function render() {
     if (app.loadState === 'loading') {
       return;
     }
+
     var now = getNow();
     var items = buildItems(now);
-    var keys = items.map(function (it) {
-      return it.key;
-    });
-    var sameOrder = keys.join('\n') === app.orderKeys.join('\n');
+
+    var keys =
+      items.map(function (it) {
+        return it.key;
+      });
+
+    var sameOrder =
+      keys.join('\n') ===
+      app.orderKeys.join('\n');
+
     var anchor = captureAnchor();
     var changed = false;
 
-    // 読み込み中の表示を消す
-    if (galleryNote && galleryNote.parentNode) {
-      galleryNote.parentNode.removeChild(galleryNote);
+    if (galleryNote &&
+        galleryNote.parentNode) {
+      galleryNote.parentNode.removeChild(
+        galleryNote
+      );
+
       galleryNote = null;
       changed = true;
     }
 
-    // 表示要素がまだない画像は作る
     items.forEach(function (it) {
       if (!app.figures[it.key]) {
-        app.figures[it.key] = createFigure(it.file);
+        app.figures[it.key] =
+          createFigure(it.file);
       }
     });
 
-    // 状態（運行中・これから・終了）を反映する
     items.forEach(function (it) {
       var fig = app.figures[it.key];
       var state = it.state || 'none';
+
       if (fig.getAttribute('data-state') !== state) {
-        fig.setAttribute('data-state', state);
-        var img = fig.querySelector('img');
+        fig.setAttribute(
+          'data-state',
+          state
+        );
+
+        var img =
+          fig.querySelector('img');
+
         if (img) {
-          img.alt = STATE_LABELS[state] ? '運行表（' + STATE_LABELS[state] + '）' : '運行表';
+          img.alt =
+            STATE_LABELS[state] ?
+            '運行表（' +
+            STATE_LABELS[state] +
+            '）' :
+            '運行表';
         }
+
         changed = true;
       }
     });
 
-    // 順番が変わるときだけ DOM を並べ替える
     if (!sameOrder) {
-      Object.keys(app.figures).forEach(function (k) {
-        if (keys.indexOf(k) < 0) {
-          var old = app.figures[k];
-          if (old.parentNode) {
-            old.parentNode.removeChild(old);
+      Object.keys(app.figures)
+        .forEach(function (k) {
+
+          if (keys.indexOf(k) < 0) {
+            var old =
+              app.figures[k];
+
+            if (old.parentNode) {
+              old.parentNode.removeChild(
+                old
+              );
+            }
+
+            delete app.figures[k];
           }
-          delete app.figures[k];
-        }
-      });
+        });
+
       items.forEach(function (it) {
-        gallery.appendChild(app.figures[it.key]);
+        gallery.appendChild(
+          app.figures[it.key]
+        );
       });
+
       app.orderKeys = keys;
       changed = true;
     }
@@ -1183,126 +2087,534 @@
     }
   }
 
-  // 次の「分」の切り替わり直後に並び替えるよう予約する
   function scheduleNext() {
     if (app.timerId !== null) {
       clearTimeout(app.timerId);
     }
-    var wait = 60000 - (Date.now() % 60000) + 200;
-    app.timerId = setTimeout(function () {
-      app.timerId = null;
-      render();
-      scheduleNext();
-    }, wait);
+
+    var wait =
+      60000 -
+      (Date.now() % 60000) +
+      200;
+
+    app.timerId =
+      setTimeout(function () {
+        app.timerId = null;
+
+        render();
+        scheduleNext();
+      }, wait);
   }
 
-  // ===== 「現在地はこちら」ボタン =====
+  // ============================================================
+  // 地図関連
+  // ============================================================
 
-  // 地図のURLを作る（地図を開かない状態のときは null）
-  function buildMapUrl(result) {
+  function getMapPoint(result) {
     var p;
-    if (result && OPEN_MAP_STATUSES.indexOf(result.status) >= 0) {
+
+    if (result &&
+        OPEN_MAP_STATUSES.indexOf(result.status) >= 0) {
       p = result.point;
     } else {
-      // 運行時間外は固定地点をGoogleマップで開く
       p = OFF_HOURS_POINT;
     }
-    if (!Array.isArray(p) || p.length !== 2) {
+
+    if (!Array.isArray(p) ||
+        p.length !== 2) {
       return null;
     }
+
     var lat = Number(p[0]);
     var lng = Number(p[1]);
-    if (!isFinite(lat) || !isFinite(lng)) {
+
+    if (!isFinite(lat) ||
+        !isFinite(lng)) {
       return null;
     }
-    return MAP_BASE_URL + lat.toFixed(6) + ',' + lng.toFixed(6);
+
+    if (lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180) {
+      return null;
+    }
+
+    return {
+      lat: lat,
+      lng: lng
+    };
   }
 
-  // ボタン押下時の処理。通信せず、同期的に地図を開く
-  function onLocate() {
-    if (app.loadState === 'loading') {
-      showMessage(MSG_LOADING);
+  function buildGoogleWebUrl(point) {
+    if (!point) {
+      return null;
+    }
+
+    return GOOGLE_MAPS_WEB_URL +
+      encodeURIComponent(
+        point.lat.toFixed(6) +
+        ',' +
+        point.lng.toFixed(6)
+      );
+  }
+
+  function buildAppleMapsUrl(point) {
+    if (!point) {
+      return null;
+    }
+
+    return APPLE_MAPS_BASE_URL +
+      point.lat.toFixed(6) +
+      ',' +
+      point.lng.toFixed(6);
+  }
+
+  function buildGoogleMapsIosUrl(point) {
+    if (!point) {
+      return null;
+    }
+
+    return GOOGLE_MAPS_IOS_BASE_URL +
+      encodeURIComponent(
+        point.lat.toFixed(6) +
+        ',' +
+        point.lng.toFixed(6)
+      );
+  }
+
+  function buildGoogleMapsAndroidIntent(point) {
+    if (!point) {
+      return null;
+    }
+
+    var query =
+      point.lat.toFixed(6) +
+      ',' +
+      point.lng.toFixed(6);
+
+    return (
+      GOOGLE_MAPS_ANDROID_INTENT_BASE +
+      encodeURIComponent(query) +
+      '#Intent;' +
+      'scheme=https;' +
+      'package=com.google.android.apps.maps;' +
+      'end'
+    );
+  }
+
+  function isIOS() {
+    var ua =
+      navigator.userAgent ||
+      navigator.vendor ||
+      window.opera ||
+      '';
+
+    var iosByUA =
+      /iPad|iPhone|iPod/i.test(ua);
+
+    var ipadDesktopMode =
+      navigator.platform === 'MacIntel' &&
+      navigator.maxTouchPoints &&
+      navigator.maxTouchPoints > 1;
+
+    return iosByUA || ipadDesktopMode;
+  }
+
+  function isAndroid() {
+    return /Android/i.test(
+      navigator.userAgent || ''
+    );
+  }
+
+  function openMapChoice(point) {
+    app.pendingMapPoint = point;
+
+    mapModal.hidden = false;
+
+    setTimeout(function () {
+      appleMapButton.focus();
+    }, 0);
+  }
+
+  function closeMapChoice() {
+    mapModal.hidden = true;
+    app.pendingMapPoint = null;
+  }
+
+  function openAppleMaps() {
+    var point = app.pendingMapPoint;
+
+    if (!point) {
+      closeMapChoice();
       return;
     }
-    var result = null;
-    if (hasCore() && typeof window.Core.getPosition === 'function') {
-      // 読み込み失敗時は data に null を渡し、error の結果を受け取る
-      var data = app.loadState === 'ok' ? app.data : null;
-      result = window.Core.getPosition(data, getNow());
-    }
-    if (!result || typeof result.message !== 'string') {
-      result = { status: 'error', point: null, message: MSG_ERROR, checkpoint: null };
-    }
-    var url = buildMapUrl(result);
+
+    var url =
+      buildAppleMapsUrl(point);
+
+    closeMapChoice();
+
     if (url) {
-      window.open(url, '_blank');
+      window.location.href = url;
     }
-    showMessage(result.message);
   }
 
-  // ===== route.json の読み込み =====
+  function openGoogleMapsIOS() {
+    var point = app.pendingMapPoint;
+
+    if (!point) {
+      closeMapChoice();
+      return;
+    }
+
+    var appUrl =
+      buildGoogleMapsIosUrl(point);
+
+    var webUrl =
+      buildGoogleWebUrl(point);
+
+    closeMapChoice();
+
+    if (!appUrl) {
+      if (webUrl) {
+        window.location.href = webUrl;
+      }
+      return;
+    }
+
+    var appOpened = false;
+    var fallbackTimer = null;
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        appOpened = true;
+
+        if (fallbackTimer !== null) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+
+        document.removeEventListener(
+          'visibilitychange',
+          onVisibilityChange
+        );
+      }
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      onVisibilityChange
+    );
+
+    window.location.href = appUrl;
+
+    fallbackTimer =
+      setTimeout(function () {
+        document.removeEventListener(
+          'visibilitychange',
+          onVisibilityChange
+        );
+
+        if (!appOpened && webUrl) {
+          window.location.href = webUrl;
+        }
+      }, 1200);
+  }
+
+  function openGoogleMapsAndroid(point) {
+    var intentUrl =
+      buildGoogleMapsAndroidIntent(point);
+
+    var webUrl =
+      buildGoogleWebUrl(point);
+
+    if (!intentUrl) {
+      if (webUrl) {
+        window.location.href = webUrl;
+      }
+      return;
+    }
+
+    var appOpened = false;
+    var fallbackTimer = null;
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        appOpened = true;
+
+        if (fallbackTimer !== null) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+
+        document.removeEventListener(
+          'visibilitychange',
+          onVisibilityChange
+        );
+      }
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      onVisibilityChange
+    );
+
+    window.location.href = intentUrl;
+
+    fallbackTimer =
+      setTimeout(function () {
+        document.removeEventListener(
+          'visibilitychange',
+          onVisibilityChange
+        );
+
+        if (!appOpened && webUrl) {
+          window.location.href = webUrl;
+        }
+      }, 1200);
+  }
+
+  function openGoogleMapsWeb(point) {
+    var url =
+      buildGoogleWebUrl(point);
+
+    if (url) {
+      window.location.href = url;
+    }
+  }
+
+  function openMap(point) {
+    if (!point) {
+      return;
+    }
+
+    if (isIOS()) {
+      openMapChoice(point);
+      return;
+    }
+
+    if (isAndroid()) {
+      openGoogleMapsAndroid(point);
+      return;
+    }
+
+    openGoogleMapsWeb(point);
+  }
+
+  function onLocate() {
+    if (app.loadState === 'loading') {
+      return;
+    }
+
+    var result = null;
+
+    if (hasCore() &&
+        typeof window.Core.getPosition === 'function') {
+
+      var data =
+        app.loadState === 'ok' ?
+        app.data :
+        null;
+
+      result =
+        window.Core.getPosition(
+          data,
+          getNow()
+        );
+    }
+
+    if (!result) {
+      result = {
+        status: 'error',
+        point: null,
+        message: '',
+        checkpoint: null
+      };
+    }
+
+    var point =
+      getMapPoint(result);
+
+    if (point) {
+      openMap(point);
+    }
+  }
+
+  // ============================================================
+  // 地図選択モーダルのイベント
+  // ============================================================
+
+  appleMapButton.addEventListener(
+    'click',
+    function () {
+      openAppleMaps();
+    }
+  );
+
+  googleMapButton.addEventListener(
+    'click',
+    function () {
+      openGoogleMapsIOS();
+    }
+  );
+
+  cancelMapButton.addEventListener(
+    'click',
+    function () {
+      closeMapChoice();
+    }
+  );
+
+  /*
+   * モーダル背景部分をタップした場合も閉じる。
+   * 背景は透明なので、元の画面がそのまま見える。
+   */
+  mapModal.addEventListener(
+    'click',
+    function (event) {
+      if (event.target === mapModal) {
+        closeMapChoice();
+      }
+    }
+  );
+
+  /*
+   * Escキーで閉じる。
+   */
+  document.addEventListener(
+    'keydown',
+    function (event) {
+      if (event.key === 'Escape' &&
+          !mapModal.hidden) {
+        closeMapChoice();
+      }
+    }
+  );
+
+  // ============================================================
+  // route.json の読み込み
+  // ============================================================
 
   function loadRoute() {
     if (typeof fetch !== 'function') {
-      return Promise.reject(new Error('このブラウザは fetch に対応していません'));
+      return Promise.reject(
+        new Error(
+          'このブラウザは fetch に対応していません'
+        )
+      );
     }
-    var url = ROUTE_URL + '?v=' + Date.now();
-    var request = fetch(url, { cache: 'no-store' }).then(function (res) {
-      if (!res.ok) {
-        throw new Error('HTTP ' + res.status);
-      }
-      return res.json();
-    });
-    var timeout = new Promise(function (resolve, reject) {
-      setTimeout(function () {
-        reject(new Error('読み込みがタイムアウトしました'));
-      }, LOAD_TIMEOUT_MS);
-    });
-    return Promise.race([request, timeout]);
+
+    var url =
+      ROUTE_URL +
+      '?v=' +
+      Date.now();
+
+    var request =
+      fetch(url, {
+        cache: 'no-store'
+      })
+      .then(function (res) {
+        if (!res.ok) {
+          throw new Error(
+            'HTTP ' + res.status
+          );
+        }
+
+        return res.json();
+      });
+
+    var timeout =
+      new Promise(function (resolve, reject) {
+        setTimeout(function () {
+          reject(
+            new Error(
+              '読み込みがタイムアウトしました'
+            )
+          );
+        }, LOAD_TIMEOUT_MS);
+      });
+
+    return Promise.race([
+      request,
+      timeout
+    ]);
   }
 
-  // ===== 初期化 =====
+  // ============================================================
+  // 初期化
+  // ============================================================
 
   function init() {
-    setupTestBar(parseTestNow());
+    setupTestBar(
+      parseTestNow()
+    );
 
-    locateButton.addEventListener('click', onLocate);
-    window.addEventListener('resize', updateBottomSpace);
-    window.addEventListener('orientationchange', updateBottomSpace);
+    locateButton.addEventListener(
+      'click',
+      onLocate
+    );
 
-    // 別のアプリから戻ってきたときは、すぐに並び替え直す
-    document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible' && app.loadState !== 'loading') {
-        render();
-        scheduleNext();
+    document.addEventListener(
+      'visibilitychange',
+      function () {
+        if (document.visibilityState === 'visible' &&
+            app.loadState !== 'loading') {
+
+          render();
+          scheduleNext();
+        }
       }
-    });
+    );
 
     if (!hasCore()) {
-      // core.js が読み込めない場合は、読み込み失敗と同じ扱いにする
-      console.warn('core.js を読み込めませんでした');
+      console.warn(
+        'core.js を読み込めませんでした'
+      );
+
       app.loadState = 'error';
+
       render();
       scheduleNext();
+
       return;
     }
 
     loadRoute()
       .then(function (data) {
-        if (!data || typeof data !== 'object' || Array.isArray(data) || !Array.isArray(data.days)) {
-          throw new Error('route.json の形式が正しくありません');
+        if (!data ||
+            typeof data !== 'object' ||
+            Array.isArray(data) ||
+            !Array.isArray(data.days)) {
+
+          throw new Error(
+            'route.json の形式が正しくありません'
+          );
         }
+
         if (typeof window.Core.validate === 'function') {
-          var errors = window.Core.validate(data);
-          if (Array.isArray(errors) && errors.length) {
-            console.warn('route.json に問題があります：\n' + errors.join('\n'));
+          var errors =
+            window.Core.validate(data);
+
+          if (Array.isArray(errors) &&
+              errors.length) {
+
+            console.warn(
+              'route.json に問題があります：\n' +
+              errors.join('\n')
+            );
           }
         }
+
         app.data = data;
         app.loadState = 'ok';
       })
       .catch(function (err) {
-        console.warn('route.json を読み込めませんでした：', err);
+        console.warn(
+          'route.json を読み込めませんでした：',
+          err
+        );
+
         app.data = null;
         app.loadState = 'error';
       })
@@ -1315,5 +2627,6 @@
   init();
 })();
 </script>
+
 </body>
 </html>
