@@ -906,6 +906,7 @@
     'images/06.jpg'
   ];
   var MAP_BASE_URL = 'https://www.google.com/maps/search/?api=1&query=';
+  var OFF_HOURS_POINT = [34.712, 137.858];
   // 読み込みがこの時間（ミリ秒）を超えたら失敗として扱う
   var LOAD_TIMEOUT_MS = 15000;
   // 地図を開く状態
@@ -1199,10 +1200,13 @@
 
   // 地図のURLを作る（地図を開かない状態のときは null）
   function buildMapUrl(result) {
-    if (!result || OPEN_MAP_STATUSES.indexOf(result.status) < 0) {
-      return null;
+    var p;
+    if (result && OPEN_MAP_STATUSES.indexOf(result.status) >= 0) {
+      p = result.point;
+    } else {
+      // 運行時間外は固定地点をGoogleマップで開く
+      p = OFF_HOURS_POINT;
     }
-    var p = result.point;
     if (!Array.isArray(p) || p.length !== 2) {
       return null;
     }
